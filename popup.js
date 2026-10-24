@@ -1087,6 +1087,11 @@ async function init() {
 
   // 事件绑定
   $('avatarBtn').addEventListener('click', petMember);
+  $('avatarEditBadge').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const m = currentMember();
+    if (m) openBabySheet(m.id); else openBabySheet(null);
+  });
   $('btnSettings').addEventListener('click', () => { fillSettings(); openSheet('settingsMask'); });
   $('btnAdd').addEventListener('click', () => openBabySheet(null));
   $('btnEdit').addEventListener('click', () => {
