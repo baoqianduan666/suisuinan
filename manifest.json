@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "岁岁念",
+  "version": "2.3",
+  "description": "记着家人的生日与年岁：农历生日提醒、里程碑倒计时、工位奶粉钱计算器、陪伴打卡与成就。",
+  "action": {
+    "default_title": "岁岁念",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "alarms", "notifications"],
+  "offline_enabled": true
+}

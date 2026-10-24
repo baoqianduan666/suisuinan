@@ -1,0 +1,9 @@
+# 旧版源码备份（本地保留，不进仓库）
+backup-v1/
+
+# 系统 / 编辑器
+Thumbs.db
+.DS_Store
+*.log
+.vscode/
+.idea/

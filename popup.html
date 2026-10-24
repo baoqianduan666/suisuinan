@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>岁岁念</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-dot"></span>岁岁念</div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="btnAdd" title="添加宝宝">＋</button>
+        <button class="icon-btn" id="btnSettings" title="设置">⚙</button>
+      </div>
+    </header>
+
+    <section class="hero" id="hero">
+      <div class="chips" id="chips"></div>
+
+      <div class="hero-main">
+        <button class="avatar" id="avatarBtn" title="摸摸头，有惊喜">
+          <img id="avatarImg" alt="宝宝头像" />
+          <span class="avatar-emoji" id="avatarEmoji">👶</span>
+          <span class="avatar-ring"></span>
+        </button>
+        <div class="hero-info">
+          <div class="baby-name" id="babyName">还没有宝宝</div>
+          <div class="age-line" id="ageLine"><i>点右上角 ＋ 添加</i></div>
+          <div class="meta-line" id="metaLine">数据只存在这台电脑上</div>
+        </div>
+      </div>
+
+      <div class="speech" id="speech">记录下出生那天，剩下的交给时间。</div>
+      <div class="hearts-layer" id="heartsLayer"></div>
+      <div class="combo" id="combo"></div>
+    </section>
+
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-view="growth">成长</button>
+      <button class="tab" data-view="work">工位</button>
+      <button class="tab" data-view="bag">成就</button>
+    </nav>
+
+    <main class="views" id="views">
+      <!-- ============ 成长 ============ -->
+      <section class="view active" id="view-growth">
+        <div class="card">
+          <div class="card-head">
+            <span>下一个里程碑</span>
+            <span class="pill" id="msName">—</span>
+          </div>
+          <div class="ms-row">
+            <div class="ms-num" id="msDays">—<i>天</i></div>
+            <div class="ms-progress">
+              <div class="bar"><i id="msBar"></i></div>
+              <div class="ms-sub" id="msSub">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid3">
+          <div class="stat"><b id="stDays">—</b><span>出生天数</span></div>
+          <div class="stat"><b id="stWeeks">—</b><span>周</span></div>
+          <div class="stat"><b id="stHours">—</b><span>小时</span></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span>宝宝档案</span><button class="link-btn" id="btnEdit" style="padding:0;font-size:10.5px">编辑</button></div>
+          <div class="rows">
+            <div class="row"><span>出生日期</span><b id="fBirth">—</b></div>
+            <div class="row"><span>农历生日</span><b id="fLunar">—</b></div>
+            <div class="row"><span>星座</span><b id="fZodiac">—</b></div>
+            <div class="row"><span>生肖</span><b id="fZodiacCn">—</b></div>
+            <div class="row"><span>下次公历</span><b id="fNextBirthday">—</b></div>
+            <div class="row"><span>下次农历</span><b id="fNextLunar">—</b></div>
+          </div>
+        </div>
+
+        <div class="card" id="birthdayCard" style="display:none">
+          <div class="card-head"><span>🎂 今天生日</span><span class="pill">快许愿</span></div>
+          <div style="font-size:11.5px;color:var(--ink-2);line-height:1.6" id="birthdayMsg">—</div>
+        </div>
+      </section>
+
+      <!-- ============ 工位 ============ -->
+      <section class="view" id="view-work">
+        <div class="card">
+          <div class="card-head">
+            <span id="workLabel">距离下班</span>
+            <span class="pill mint" id="workPill">工作中</span>
+          </div>
+          <div class="countdown" id="countdown">--:--:--</div>
+          <div class="earn-row">
+            <div><b id="earnToday">¥0</b><span>今日已赚</span></div>
+            <div><b id="milkCans">0</b><span>罐奶粉</span></div>
+            <div><b id="diapers">0</b><span>片尿不湿</span></div>
+          </div>
+          <div class="bar"><i id="workBar"></i></div>
+          <div class="hint" id="workHint">在设置里填上上下班时间和时薪，就能把工位变成奶粉钱计算器。</div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span>今天为什么值得上班</span><span class="pill" id="mottoTag">动力</span></div>
+          <div style="font-size:12px;color:var(--ink-2);line-height:1.65" id="motto">—</div>
+        </div>
+      </section>
+
+      <!-- ============ 成就 ============ -->
+      <section class="view" id="view-bag">
+        <div class="card level">
+          <div class="lvl-badge">Lv<b id="lvl">1</b></div>
+          <div class="lvl-body">
+            <div class="lvl-title" id="lvlTitle">青铜养娃人</div>
+            <div class="bar"><i id="lvlBar"></i></div>
+            <div class="lvl-sub" id="lvlSub">再赚 100 金币升级</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span>连续陪伴</span><span class="pill" id="streakDays">0 天</span></div>
+          <div class="streak-grid" id="streakGrid"></div>
+        </div>
+
+        <div class="card-head" style="margin:2px 2px -2px;color:var(--muted);font-size:11.5px;font-weight:600">
+          <span>成就徽章 <span id="achvCount">0/12</span></span>
+        </div>
+        <div class="achv-grid" id="achvGrid"></div>
+      </section>
+    </main>
+
+    <!-- ============ 设置 ============ -->
+    <div class="sheet-mask" id="settingsMask">
+      <div class="sheet">
+        <div class="sheet-title"><span>工位设置</span><button type="button" data-close="settingsMask">关闭</button></div>
+        <div class="field-row">
+          <div class="field"><label>上班时间</label><input type="time" id="stStart" /></div>
+          <div class="field"><label>下班时间</label><input type="time" id="stEnd" /></div>
+        </div>
+        <div class="field"><label>时薪（元/小时）</label><input type="number" id="stHourly" min="0" step="1" /></div>
+        <div class="field"><label>奶粉单价（元/罐）</label><input type="number" id="stMilk" min="0" step="10" /></div>
+        <label class="switch-row"><input type="checkbox" id="stLunar" /> 农历生日当天提醒我（浏览器通知）</label>
+        <div class="sheet-actions">
+          <button class="btn" id="stSave">保存</button>
+        </div>
+        <div class="link-btn" id="stExport">导出备份</div>
+        <div class="link-btn" id="stImport">导入备份</div>
+        <input type="file" id="importFile" accept="application/json" style="display:none" />
+        <div style="height:6px"></div>
+      </div>
+    </div>
+
+    <!-- ============ 添加 / 编辑宝宝 ============ -->
+    <div class="sheet-mask" id="babyMask">
+      <div class="sheet">
+        <div class="sheet-title"><span id="babySheetTitle">添加宝宝</span><button type="button" data-close="babyMask">关闭</button></div>
+        <div class="avatar-pick">
+          <div class="preview" id="avatarPreview">👶</div>
+          <div>
+            <label class="pick" for="avatarInput">选择头像</label>
+            <input type="file" id="avatarInput" accept="image/*" />
+            <div style="font-size:10px;color:var(--muted);margin-top:6px">会自动压缩到 160px，不占空间</div>
+          </div>
+        </div>
+        <div style="height:10px"></div>
+        <div class="field"><label>宝宝的昵称</label><input type="text" id="babyNameInput" placeholder="例如：皮皮" maxlength="12" /></div>
+        <div class="field"><label>出生日期</label><input type="date" id="babyBirthInput" /></div>
+        <div class="sheet-actions">
+          <button class="btn" id="babySave">保存</button>
+          <button class="btn danger" id="babyDelete" style="display:none">删除</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <canvas id="fx"></canvas>
+  </div>
+  <script src="lunar.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
