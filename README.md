@@ -4,6 +4,20 @@
 
 它记录每位家人的生日与年岁，把「还有多久下班」和「今天赚了几罐奶粉」摆在眼前 —— 上班打开扩展，第一眼看到的是下班倒计时和家人的一句叮嘱。所有数据都存在本机 `chrome.storage.local`，不联网、不上传。
 
+## 界面
+
+<p align="center">
+  <img src="docs/screenshots/growth.png" width="240" alt="成长" />
+  <img src="docs/screenshots/work.png" width="240" alt="工位" />
+  <img src="docs/screenshots/achievements.png" width="240" alt="成就" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/add-member.png" width="240" alt="添加成员" />
+  <img src="docs/screenshots/dark.png" width="240" alt="深色模式" />
+</p>
+
+<sub>截图使用演示数据（豆豆 / 妈妈 / 阿泽），不含任何真实信息。</sub>
+
 ## 家人
 
 - 一个扩展管全家人。每位成员有称呼、关系、出生日期和头像
