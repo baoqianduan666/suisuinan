@@ -52,8 +52,8 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 });
 
 async function check(notify) {
-  const data = await chrome.storage.local.get(['babies', 'settings', 'notified']);
-  const babies = data.babies || [];
+  const data = await chrome.storage.local.get(['members', 'babies', 'settings', 'notified']);
+  const members = data.members || (data.babies || []).map((m) => ({ ...m, relation: m.relation || '宝宝' }));
   const settings = data.settings || {};
   const notified = data.notified || {};
   if (settings.lunarReminder === false) return { skipped: 'reminder-off' };
@@ -63,9 +63,9 @@ async function check(notify) {
   const key = ymd(today);
   const out = [];
 
-  for (const baby of babies) {
-    if (!baby || !baby.birthday) continue;
-    const birth = parseYmd(baby.birthday);
+  for (const member of members) {
+    if (!member || !member.birthday) continue;
+    const birth = parseYmd(member.birthday);
     const nb = Lunar.nextBirthday(birth, today);
     if (!nb) continue;
 
@@ -75,13 +75,13 @@ async function check(notify) {
     let id = null;
 
     if (nb.days === 0) {
-      title = `🎂 今天是${baby.name}的农历生日`;
+      title = `🎂 今天是${member.name}的农历生日`;
       message = `${label} · 满 ${ageText(birth)}，记得买蛋糕。`;
-      id = `lunar-${baby.id}-${key}`;
+      id = `lunar-${member.id}-${key}`;
     } else if (nb.days === 1) {
-      title = `🍰 明天是${baby.name}的农历生日`;
+      title = `🍰 明天是${member.name}的农历生日`;
       message = `${label}，今天记得订蛋糕。`;
-      id = `lunar-${baby.id}-eve-${key}`;
+      id = `lunar-${member.id}-eve-${key}`;
     }
 
     if (id && notify && !notified[id]) {
@@ -94,7 +94,7 @@ async function check(notify) {
       });
       notified[id] = key;
     }
-    out.push({ name: baby.name, days: nb.days, label, notified: !!id });
+    out.push({ name: member.name, days: nb.days, label, notified: !!id });
   }
 
   // 只保留最近 60 条，避免无限增长
@@ -104,5 +104,5 @@ async function check(notify) {
     for (const k of keys.slice(0, keys.length - 60)) delete notified[k];
   }
   await chrome.storage.local.set({ notified });
-  return { today: key, babies: out };
+  return { today: key, members: out };
 }

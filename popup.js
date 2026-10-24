@@ -26,7 +26,7 @@ const DEFAULTS = {
 };
 
 const state = {
-  babies: [],
+  members: [],
   currentId: null,
   settings: { ...DEFAULTS.settings },
   stats: JSON.parse(JSON.stringify(DEFAULTS.stats)),
@@ -121,20 +121,56 @@ function zodiacCnOf(date) {
 }
 
 /* ---------------- 文案 ---------------- */
-const SPEECHES = [
-  '妈妈/爸爸加油，我在家乖乖喝奶～',
-  '听说你今天很忙，记得喝水呀',
-  '我刚刚梦到你了，醒来你就不见了',
-  '别摸鱼啦，我在长个子呢',
-  '再赚一点点，就够我一罐奶粉啦',
-  '你上班的时候我都很乖的（真的）',
-  '下班早点回来，我给你笑一个',
-  '我把今天的开心都存起来了，等你回来分你',
-  '我今天又重了一点点，你摸摸看',
-  '工作再难，也没有我半夜哭难',
-  '你敲键盘的声音，像在给我唱歌',
-  '记得吃饭，不然没力气抱我',
-];
+const SPEECHES = {
+  child: [
+    '妈妈/爸爸加油，我在家乖乖喝奶～',
+    '听说你今天很忙，记得喝水呀',
+    '我刚刚梦到你了，醒来你就不见了',
+    '别摸鱼啦，我在长个子呢',
+    '再赚一点点，就够我一罐奶粉啦',
+    '你上班的时候我都很乖的（真的）',
+    '下班早点回来，我给你笑一个',
+    '我把今天的开心都存起来了，等你回来分你',
+    '我今天又重了一点点，你摸摸看',
+    '工作再难，也没有我半夜哭难',
+    '你敲键盘的声音，像在给我唱歌',
+    '记得吃饭，不然没力气抱我',
+  ],
+  partner: [
+    '今天也辛苦了，早点回来',
+    '别熬太晚，我等你一起吃饭',
+    '你不用什么都自己扛，还有我呢',
+    '刚看了下时间，快下班了吧',
+    '钱慢慢赚，人别累坏了',
+    '我把饭热好了，回来就能吃',
+    '你今天也很棒，虽然没人告诉你',
+    '周末想跟你去走走，别安排加班了',
+  ],
+  parent: [
+    '工作别太拼，身体要紧',
+    '饭吃了没？别老对付一口',
+    '天冷了，出门多穿件衣服',
+    '我们挺好的，不用总惦记家里',
+    '你忙你的，我们都懂',
+    '有空就回来看看，没空也没事',
+    '别总熬夜，眼睛要紧',
+    '攒点钱给自己花，别都往家里寄',
+  ],
+  other: [
+    '最近还好吗？',
+    '好久没见了，有空聚聚',
+    '记得按时吃饭',
+    '生日快到了，别忘了',
+  ],
+};
+
+function speechPool(member) {
+  const r = relationOf(member);
+  if (r === '宝宝') return SPEECHES.child;
+  if (r === '爱人') return SPEECHES.partner;
+  if (['妈妈', '爸爸', '爷爷', '奶奶', '外公', '外婆'].includes(r)) return SPEECHES.parent;
+  return SPEECHES.other;
+}
 
 const MOTTOS = [
   '「今天的班，是给 {name} 换的口粮。」',
@@ -147,28 +183,55 @@ const MOTTOS = [
   '「你不是在打工，你是在给 {name} 攒底气。」',
 ];
 
+/* ---------------- 关系 ---------------- */
+const RELATIONS = [
+  { key: '宝宝', emoji: '👶' },
+  { key: '爱人', emoji: '💗' },
+  { key: '妈妈', emoji: '👩' },
+  { key: '爸爸', emoji: '👨' },
+  { key: '奶奶', emoji: '👵' },
+  { key: '爷爷', emoji: '👴' },
+  { key: '外婆', emoji: '🧓' },
+  { key: '外公', emoji: '🧑‍🦳' },
+  { key: '亲友', emoji: '🧑' },
+];
+const REL_EMOJI = {};
+RELATIONS.forEach((r) => { REL_EMOJI[r.key] = r.emoji; });
+
+const relationOf = (m) => (m && m.relation) || '宝宝';
+const isChild = (m) => relationOf(m) === '宝宝';
+const relEmoji = (m) => REL_EMOJI[relationOf(m)] || '👤';
+const isElder = (m) => ['妈妈', '爸爸', '爷爷', '奶奶', '外公', '外婆'].includes(relationOf(m));
+
 /* ---------------- 计算 ---------------- */
-function currentBaby() {
-  return state.babies.find((b) => b.id === state.currentId) || state.babies[0] || null;
+function currentMember() {
+  return state.members.find((b) => b.id === state.currentId) || state.members[0] || null;
 }
 
-function milestoneOf(baby) {
-  const birth = parseYmd(baby.birthday);
+function milestoneOf(member) {
+  const birth = parseYmd(member.birthday);
   const age = ageParts(birth);
   const today = startOfDay(new Date());
   if (age.future) return { label: '等待出生', days: 0, progress: 0, sub: '出生日期在未来' };
 
   const list = [];
-  const nextMonth = addMonths(birth, age.totalMonths + 1);
-  list.push({ label: `${age.totalMonths + 1} 个月`, target: nextMonth, from: age.anchor });
-
   const nextBirthday = addYears(birth, age.years + 1);
   list.push({ label: `${age.years + 1} 岁生日`, target: nextBirthday, from: addYears(birth, age.years) });
 
-  if (age.dayCount < 100) list.push({ label: '100 天', target: addDays(birth, 100), from: birth });
-  if (age.dayCount < 1000) list.push({ label: '1000 天', target: addDays(birth, 1000), from: birth });
+  if (isChild(member)) {
+    const nextMonth = addMonths(birth, age.totalMonths + 1);
+    list.push({ label: `${age.totalMonths + 1} 个月`, target: nextMonth, from: age.anchor });
+    if (age.dayCount < 100) list.push({ label: '100 天', target: addDays(birth, 100), from: birth });
+    if (age.dayCount < 1000) list.push({ label: '1000 天', target: addDays(birth, 1000), from: birth });
+  } else {
+    const decade = Math.floor(age.years / 10) * 10 + 10;
+    const decadeDate = addYears(birth, decade);
+    if (daysBetween(today, decadeDate) >= 0) {
+      list.push({ label: `${decade} 岁`, target: decadeDate, from: addYears(birth, decade - 10) });
+    }
+  }
 
-  // 农历生日也算一个里程碑（Chrome 内置农历日历，闰月由 ICU 处理）
+  // 农历生日也算一个里程碑（1900–2100 查表）
   if (typeof Lunar !== 'undefined' && Lunar.supported()) {
     const nb = Lunar.nextBirthday(birth, today);
     if (nb && nb.days >= 0) {
@@ -214,39 +277,44 @@ function levelInfo() {
 }
 
 const ACHIEVEMENTS = [
-  { id: 'first', icon: '🍼', name: '第一口奶', desc: '添加第一个宝宝', test: () => state.babies.length > 0 },
+  { id: 'first', icon: '🍼', name: '初次记录', desc: '添加第一个成员', test: () => state.members.length > 0 },
   { id: 'pet10', icon: '🤚', name: '摸摸头', desc: '累计抚摸 10 次', test: () => state.stats.pets >= 10 },
   { id: 'pet100', icon: '💗', name: '毛茸茸', desc: '累计抚摸 100 次', test: () => state.stats.pets >= 100 },
   { id: 'coin500', icon: '🪙', name: '小有积蓄', desc: '金币达到 500', test: () => state.stats.coins >= 500 },
   { id: 'streak3', icon: '📅', name: '三日不辍', desc: '连续 3 天打开', test: () => state.stats.streak.count >= 3 },
   { id: 'streak7', icon: '🏅', name: '一周坚持', desc: '连续 7 天打开', test: () => state.stats.streak.count >= 7 },
   {
-    id: 'days100', icon: '🌱', name: '百天', desc: '宝宝出生满 100 天',
-    test: () => state.babies.some((b) => ageParts(parseYmd(b.birthday)).dayCount >= 100),
+    id: 'days100', icon: '🌱', name: '百天', desc: '有宝宝满 100 天',
+    test: () => state.members.some((b) => isChild(b) && ageParts(parseYmd(b.birthday)).dayCount >= 100),
   },
   {
-    id: 'year1', icon: '🎂', name: '周岁', desc: '宝宝满 1 岁',
-    test: () => state.babies.some((b) => ageParts(parseYmd(b.birthday)).years >= 1),
+    id: 'year1', icon: '🎂', name: '周岁', desc: '有宝宝满 1 岁',
+    test: () => state.members.some((b) => isChild(b) && ageParts(parseYmd(b.birthday)).years >= 1),
   },
-  { id: 'night', icon: '🌙', name: '深夜守护', desc: '22 点后还在陪宝宝', test: () => state.stats.flags.night },
+  { id: 'family3', icon: '🏠', name: '一家人', desc: '记录到 3 位家人', test: () => state.members.length >= 3 },
+  { id: 'family5', icon: '🌳', name: '一大家子', desc: '记录到 5 位家人', test: () => state.members.length >= 5 },
+  { id: 'elder', icon: '🧓', name: '上有老', desc: '添加了长辈', test: () => state.members.some((b) => isElder(b)) },
+  { id: 'night', icon: '🌙', name: '深夜守护', desc: '22 点后还在陪家人', test: () => state.stats.flags.night },
   { id: 'early', icon: '🌅', name: '早安', desc: '8 点前打开过', test: () => state.stats.flags.early },
 ];
 
 /* ---------------- 渲染 ---------------- */
-function ageText(age) {
+function ageText(age, member) {
   if (age.future) return { html: '<i>还没出生</i>', plain: '还没出生' };
-  const parts = [];
-  if (age.years > 0) parts.push(`<b>${age.years}</b><i>岁</i>`);
-  if (age.months > 0) parts.push(`<b>${age.months}</b><i>个月</i>`);
-  parts.push(`<b>${age.days}</b><i>天</i>`);
-  const plain = `${age.years ? age.years + '岁' : ''}${age.months ? age.months + '个月' : ''}${age.days}天`;
-  return { html: parts.join(''), plain };
+  const child = !member || isChild(member);
+  const html = [];
+  const plain = [];
+  if (age.years > 0) { html.push(`<b>${age.years}</b><i>岁</i>`); plain.push(`${age.years}岁`); }
+  if (age.months > 0) { html.push(`<b>${age.months}</b><i>个月</i>`); plain.push(`${age.months}个月`); }
+  if (child || age.years === 0) { html.push(`<b>${age.days}</b><i>天</i>`); plain.push(`${age.days}天`); }
+  if (!plain.length) { html.push('<b>0</b><i>天</i>'); plain.push('0天'); }
+  return { html: html.join(''), plain: plain.join('') };
 }
 
 function renderChips() {
   const box = $('chips');
   box.innerHTML = '';
-  for (const b of state.babies) {
+  for (const b of state.members) {
     const chip = document.createElement('button');
     chip.className = 'chip' + (b.id === state.currentId ? ' active' : '');
     if (b.avatar) {
@@ -255,7 +323,7 @@ function renderChips() {
       chip.appendChild(img);
     } else {
       const em = document.createElement('span');
-      em.textContent = '👶';
+      em.textContent = relEmoji(b);
       em.style.fontSize = '11px';
       chip.appendChild(em);
     }
@@ -273,10 +341,10 @@ function renderChips() {
 }
 
 function renderHero() {
-  const baby = currentBaby();
+  const member = currentMember();
   const av = $('avatarBtn');
-  if (!baby) {
-    $('babyName').textContent = '还没有宝宝';
+  if (!member) {
+    $('babyName').textContent = '还没有添加成员';
     $('ageLine').innerHTML = '<i>点右上角 ＋ 添加</i>';
     $('metaLine').textContent = '数据只存在这台电脑上';
     av.classList.remove('has-img');
@@ -285,41 +353,54 @@ function renderHero() {
     return;
   }
   av.disabled = false;
-  $('babyName').textContent = baby.name;
+
+  const nameEl = $('babyName');
+  nameEl.textContent = '';
+  nameEl.appendChild(document.createTextNode(member.name));
+  const badge = document.createElement('span');
+  badge.className = 'badge';
+  badge.textContent = relationOf(member);
+  nameEl.appendChild(badge);
 
   const img = $('avatarImg');
-  if (baby.avatar) {
-    img.src = baby.avatar;
+  if (member.avatar) {
+    img.src = member.avatar;
     av.classList.add('has-img');
   } else {
     av.classList.remove('has-img');
-    $('avatarEmoji').textContent = '👶';
+    $('avatarEmoji').textContent = relEmoji(member);
   }
 
-  const birth = parseYmd(baby.birthday);
+  const birth = parseYmd(member.birthday);
   const age = ageParts(birth);
-  const t = ageText(age);
+  const t = ageText(age, member);
   $('ageLine').innerHTML = t.html;
-  $('metaLine').textContent = age.future
-    ? `距离出生还有 ${Math.abs(daysBetween(startOfDay(new Date()), birth))} 天`
-    : `第 ${age.dayCount + 1} 天 · ${zodiacOf(birth)} · 已陪伴 ${age.dayCount} 个日夜`;
+
+  if (age.future) {
+    $('metaLine').textContent = `距离出生还有 ${Math.abs(daysBetween(startOfDay(new Date()), birth))} 天`;
+  } else if (isChild(member)) {
+    $('metaLine').textContent = `第 ${age.dayCount + 1} 天 · ${zodiacOf(birth)} · 已陪伴 ${age.dayCount} 个日夜`;
+  } else {
+    const days = daysBetween(startOfDay(new Date()), addYears(birth, age.years + 1));
+    $('metaLine').textContent = `还有 ${days} 天生日 · ${zodiacOf(birth)} · 属${zodiacCnOf(birth)}`;
+  }
 }
 
 function renderGrowth() {
-  const baby = currentBaby();
-  if (!baby) {
+  const member = currentMember();
+  if (!member) {
     ['msDays', 'stDays', 'stWeeks', 'stHours', 'fBirth', 'fZodiac', 'fZodiacCn', 'fNextBirthday', 'fLunar', 'fNextLunar'].forEach((id) => {
       $(id).textContent = '—';
     });
     $('msName').textContent = '—';
-    $('msSub').textContent = '先添加一个宝宝吧';
+    $('msSub').textContent = '先添加一位家人吧';
     $('msBar').style.width = '0%';
     $('birthdayCard').style.display = 'none';
     return;
   }
-  const birth = parseYmd(baby.birthday);
+  const birth = parseYmd(member.birthday);
   const age = ageParts(birth);
-  const ms = milestoneOf(baby);
+  const ms = milestoneOf(member);
 
   $('msName').textContent = ms.label;
   $('msDays').innerHTML = `${ms.days}<i>天</i>`;
@@ -365,17 +446,17 @@ function renderGrowth() {
   $('birthdayCard').style.display = isBirthday ? 'block' : 'none';
   if (isBirthday) {
     if (age.dayCount === 0) {
-      $('birthdayMsg').textContent = `🎉 今天出生，欢迎 ${baby.name} 来到这个世界。`;
+      $('birthdayMsg').textContent = `🎉 今天出生，欢迎 ${member.name} 来到这个世界。`;
     } else {
       const both = isSolarToday && isLunarToday;
       const which = both ? '（公历农历同一天，难得）' : isLunarToday ? '（农历）' : '';
-      $('birthdayMsg').textContent = `今天是 ${baby.name} ${age.years} 岁生日${which}。别忘了蛋糕和照片。`;
+      $('birthdayMsg').textContent = `今天是 ${member.name} 的 ${age.years} 岁生日${which}。别忘了${age.years >= 60 ? '回家看看' : '蛋糕和照片'}。`;
     }
     setTimeout(() => burst(0.5, 0.3, 90), 400);
   } else if (lunarOk && lunarNext && lunarNext.days <= 7) {
     $('birthdayCard').style.display = 'block';
     $('birthdayMsg').textContent =
-      `还有 ${lunarNext.days} 天就是 ${baby.name} 的农历生日（${lunarNext.lunar.monthName}${lunarNext.lunar.dayName}），记得提前订蛋糕。`;
+      `还有 ${lunarNext.days} 天就是 ${member.name} 的农历生日（${lunarNext.lunar.monthName}${lunarNext.lunar.dayName}），记得提前订蛋糕。`;
   }
 }
 
@@ -467,22 +548,23 @@ function fmtClock(minutes) {
 }
 
 function renderMotto() {
-  const baby = currentBaby();
-  const name = baby ? baby.name : '宝宝';
+  const member = currentMember();
+  const name = member ? member.name : '家人';
   const idx = (new Date().getDate() + new Date().getMonth()) % MOTTOS.length;
   $('motto').textContent = MOTTOS[idx].replace(/\{name\}/g, name);
 }
 
 /* 首屏台词：每天固定一句，不用点也有话 */
 function renderSpeech() {
-  const baby = currentBaby();
-  if (!baby) {
-    $('speech').textContent = '记录下出生那天，剩下的交给时间。';
+  const member = currentMember();
+  if (!member) {
+    $('speech').textContent = '记录下家人的生日，剩下的交给时间。';
     return;
   }
+  const pool = speechPool(member);
   const d = new Date();
-  const idx = (d.getDate() * 7 + d.getMonth() * 3) % SPEECHES.length;
-  $('speech').textContent = SPEECHES[idx];
+  const idx = (d.getDate() * 7 + d.getMonth() * 3) % pool.length;
+  $('speech').textContent = pool[idx];
 }
 
 /* 成就 */
@@ -563,9 +645,9 @@ function selectBaby(id) {
 let comboCount = 0;
 let comboTimer = null;
 
-function petBaby() {
-  const baby = currentBaby();
-  if (!baby) {
+function petMember() {
+  const member = currentMember();
+  if (!member) {
     openBabySheet(null);
     return;
   }
@@ -590,9 +672,10 @@ function petBaby() {
   if (state.stats.daily.pets <= 40) state.stats.coins += 1;
 
   const speech = $('speech');
+  const pool = speechPool(member);
   speech.style.opacity = '0';
   setTimeout(() => {
-    speech.textContent = SPEECHES[Math.floor(Math.random() * SPEECHES.length)];
+    speech.textContent = pool[Math.floor(Math.random() * pool.length)];
     speech.style.opacity = '1';
   }, 180);
 
@@ -716,7 +799,7 @@ function saveStats() {
 
 function saveAll() {
   store.set({
-    babies: state.babies,
+    members: state.members,
     currentId: state.currentId,
     settings: state.settings,
     stats: state.stats,
@@ -777,37 +860,64 @@ function saveSettings() {
   toast('设置已保存');
 }
 
-/* 宝宝表单 */
+/* 成员表单 */
 let draftAvatar = null;
+let draftRelation = '宝宝';
 let editingId = null;
+
+function renderRelChips() {
+  const box = $('relChips');
+  box.innerHTML = '';
+  for (const r of RELATIONS) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'rel-chip' + (r.key === draftRelation ? ' on' : '');
+    btn.textContent = `${r.emoji} ${r.key}`;
+    btn.addEventListener('click', () => {
+      draftRelation = r.key;
+      renderRelChips();
+      renderAvatarPreview();
+    });
+    box.appendChild(btn);
+  }
+}
 
 function openBabySheet(id) {
   editingId = id || null;
-  const baby = id ? state.babies.find((b) => b.id === id) : null;
-  draftAvatar = baby ? baby.avatar || null : null;
-  $('babySheetTitle').textContent = baby ? '编辑宝宝' : '添加宝宝';
-  $('babyNameInput').value = baby ? baby.name : '';
-  $('babyBirthInput').value = baby ? baby.birthday : '';
-  $('babyDelete').style.display = baby ? 'block' : 'none';
+  const m = id ? state.members.find((b) => b.id === id) : null;
+  draftAvatar = m ? m.avatar || null : null;
+  draftRelation = m ? relationOf(m) : '宝宝';
+  $('babySheetTitle').textContent = m ? '编辑成员' : '添加成员';
+  $('babyNameInput').value = m ? m.name : '';
+  $('babyBirthInput').value = m ? m.birthday : '';
+  $('babyDelete').style.display = m ? 'block' : 'none';
   $('babyDelete').textContent = '删除';
   renderAvatarPreview();
+  renderRelChips();
   openSheet('babyMask');
   setTimeout(() => $('babyNameInput').focus(), 120);
 }
 
 function renderAvatarPreview() {
   const box = $('avatarPreview');
+  box.innerHTML = '';
   if (draftAvatar) {
-    box.innerHTML = '';
     const img = document.createElement('img');
     img.src = draftAvatar;
     box.appendChild(img);
   } else {
-    box.textContent = '👶';
+    const ph = document.createElement('span');
+    ph.className = 'ph';
+    ph.textContent = REL_EMOJI[draftRelation] || '👶';
+    box.appendChild(ph);
   }
+  const cam = document.createElement('span');
+  cam.className = 'cam';
+  cam.textContent = '📷';
+  box.appendChild(cam);
 }
 
-function handleAvatarFile(file) {
+function handleAvatarFile(file, input) {
   if (!file) return;
   if (!file.type.startsWith('image/')) { toast('请选择图片文件'); return; }
   const reader = new FileReader();
@@ -825,43 +935,48 @@ function handleAvatarFile(file) {
       g.drawImage(img, sx, sy, s, s, 0, 0, size, size);
       draftAvatar = c.toDataURL('image/jpeg', 0.85);
       renderAvatarPreview();
+      toast('头像已更新');
     };
+    img.onerror = () => toast('这张图片读不出来，换一张试试');
     img.src = reader.result;
   };
   reader.readAsDataURL(file);
+  if (input) input.value = '';
 }
 
 function saveBaby() {
   const name = $('babyNameInput').value.trim();
   const birth = $('babyBirthInput').value;
-  if (!name) { toast('给宝宝起个昵称吧'); return; }
+  if (!name) { toast('给 TA 起个称呼吧'); return; }
   if (!birth) { toast('请选择出生日期'); return; }
   const birthDate = parseYmd(birth);
   if (isNaN(birthDate.getTime())) { toast('日期格式不对'); return; }
   if (daysBetween(birthDate, startOfDay(new Date())) < 0) { toast('出生日期不能晚于今天'); return; }
 
   if (editingId) {
-    const b = state.babies.find((x) => x.id === editingId);
+    const b = state.members.find((x) => x.id === editingId);
     if (b) {
       b.name = name;
       b.birthday = birth;
+      b.relation = draftRelation;
       b.avatar = draftAvatar;
     }
   } else {
-    state.babies.push({
+    state.members.push({
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       name,
       birthday: birth,
+      relation: draftRelation,
       avatar: draftAvatar,
     });
-    state.currentId = state.babies[state.babies.length - 1].id;
+    state.currentId = state.members[state.members.length - 1].id;
   }
   state.stats.unlocked = Array.from(new Set(state.stats.unlocked));
   saveAll();
   closeSheet('babyMask');
   renderAll();
   checkAchievements();
-  toast(editingId ? '已保存' : `欢迎 ${name} 来到这个世界 👶`);
+  toast(editingId ? '已保存' : `${name} 已加入 ${draftRelation === '宝宝' ? '👶' : '👨‍👩‍👧'}`);
 }
 
 function deleteBaby() {
@@ -875,8 +990,8 @@ function deleteBaby() {
     }, 3000);
     return;
   }
-  state.babies = state.babies.filter((b) => b.id !== editingId);
-  if (state.currentId === editingId) state.currentId = state.babies[0] ? state.babies[0].id : null;
+  state.members = state.members.filter((b) => b.id !== editingId);
+  if (state.currentId === editingId) state.currentId = state.members[0] ? state.members[0].id : null;
   saveAll();
   closeSheet('babyMask');
   renderAll();
@@ -886,10 +1001,11 @@ function deleteBaby() {
 /* 导入导出 */
 function exportData() {
   const payload = {
-    app: 'baby-age-recorder',
-    version: 2,
+    app: 'suisuinan',
+    version: 3,
     exportedAt: new Date().toISOString(),
-    babies: state.babies,
+    members: state.members,
+    babies: state.members,   // 兼容旧版导入逻辑
     settings: state.settings,
     stats: state.stats,
   };
@@ -909,15 +1025,16 @@ function importData(file) {
   reader.onload = () => {
     try {
       const data = JSON.parse(reader.result);
-      if (!data || !Array.isArray(data.babies)) throw new Error('格式不对');
-      state.babies = data.babies;
-      state.currentId = state.babies[0] ? state.babies[0].id : null;
+      const list = Array.isArray(data.members) ? data.members : Array.isArray(data.babies) ? data.babies : null;
+      if (!list) throw new Error('格式不对');
+      state.members = list.map((m) => ({ ...m, relation: m.relation || '宝宝' }));
+      state.currentId = state.members[0] ? state.members[0].id : null;
       if (data.settings) state.settings = { ...DEFAULTS.settings, ...data.settings };
       if (data.stats) state.stats = { ...JSON.parse(JSON.stringify(DEFAULTS.stats)), ...data.stats };
       saveAll();
       renderAll();
       fillSettings();
-      toast(`已导入 ${state.babies.length} 个宝宝`);
+      toast(`已导入 ${state.members.length} 位成员`);
     } catch (e) {
       toast('导入失败：文件格式不正确');
     }
@@ -927,16 +1044,34 @@ function importData(file) {
 
 /* ---------------- 初始化 ---------------- */
 async function init() {
-  const data = await store.get(['babies', 'currentId', 'settings', 'stats']);
+  const data = await store.get(['members', 'babies', 'currentId', 'settings', 'stats']);
 
-  state.babies = Array.isArray(data.babies) ? data.babies : [];
-  state.currentId = data.currentId || (state.babies[0] ? state.babies[0].id : null);
+  // 老版本只有 babies[]，这里做一次迁移，补上 relation
+  if (Array.isArray(data.members)) {
+    state.members = data.members;
+    if (data.babies) chrome.storage.local.remove('babies');
+  } else {
+    state.members = (Array.isArray(data.babies) ? data.babies : []).map((b) => ({ ...b, relation: b.relation || '宝宝' }));
+    if (state.members.length) {
+      await store.set({ members: state.members });
+      chrome.storage.local.remove('babies');
+    }
+  }
+  state.currentId = data.currentId || (state.members[0] ? state.members[0].id : null);
   state.settings = { ...DEFAULTS.settings, ...(data.settings || {}) };
   state.stats = { ...JSON.parse(JSON.stringify(DEFAULTS.stats)), ...(data.stats || {}) };
   state.stats.streak = { ...DEFAULTS.stats.streak, ...(state.stats.streak || {}) };
   state.stats.daily = { ...DEFAULTS.stats.daily, ...(state.stats.daily || {}) };
   state.stats.flags = { ...DEFAULTS.stats.flags, ...(state.stats.flags || {}) };
   if (!Array.isArray(state.stats.unlocked)) state.stats.unlocked = [];
+
+  // 清掉已下线成就（比如番茄钟）留下的 id
+  const knownAchv = new Set(ACHIEVEMENTS.map((a) => a.id));
+  const cleaned = state.stats.unlocked.filter((id) => knownAchv.has(id));
+  if (cleaned.length !== state.stats.unlocked.length) {
+    state.stats.unlocked = cleaned;
+    saveStats();
+  }
 
   const hour = new Date().getHours();
   if (hour >= 22 || hour < 5) state.stats.flags.night = true;
@@ -951,11 +1086,11 @@ async function init() {
   checkAchievements();
 
   // 事件绑定
-  $('avatarBtn').addEventListener('click', petBaby);
+  $('avatarBtn').addEventListener('click', petMember);
   $('btnSettings').addEventListener('click', () => { fillSettings(); openSheet('settingsMask'); });
   $('btnAdd').addEventListener('click', () => openBabySheet(null));
   $('btnEdit').addEventListener('click', () => {
-    const b = currentBaby();
+    const b = currentMember();
     if (b) openBabySheet(b.id); else openBabySheet(null);
   });
   $('stSave').addEventListener('click', saveSettings);
@@ -964,7 +1099,10 @@ async function init() {
   $('importFile').addEventListener('change', (e) => importData(e.target.files[0]));
   $('babySave').addEventListener('click', saveBaby);
   $('babyDelete').addEventListener('click', deleteBaby);
-  $('avatarInput').addEventListener('change', (e) => handleAvatarFile(e.target.files[0]));
+  const pickAvatar = () => $('avatarInput').click();
+  $('avatarPreview').addEventListener('click', pickAvatar);
+  $('avatarPickBtn').addEventListener('click', pickAvatar);
+  $('avatarInput').addEventListener('change', (e) => handleAvatarFile(e.target.files[0], e.target));
 
   document.querySelectorAll('[data-close]').forEach((btn) => {
     btn.addEventListener('click', () => closeSheet(btn.dataset.close));

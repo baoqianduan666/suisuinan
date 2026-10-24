@@ -61,13 +61,13 @@
         </div>
 
         <div class="grid3">
-          <div class="stat"><b id="stDays">—</b><span>出生天数</span></div>
+          <div class="stat"><b id="stDays">—</b><span>天数</span></div>
           <div class="stat"><b id="stWeeks">—</b><span>周</span></div>
           <div class="stat"><b id="stHours">—</b><span>小时</span></div>
         </div>
 
         <div class="card">
-          <div class="card-head"><span>宝宝档案</span><button class="link-btn" id="btnEdit" style="padding:0;font-size:10.5px">编辑</button></div>
+          <div class="card-head"><span>档案</span><button class="link-btn" id="btnEdit" style="padding:0;font-size:10.5px">编辑</button></div>
           <div class="rows">
             <div class="row"><span>出生日期</span><b id="fBirth">—</b></div>
             <div class="row"><span>农历生日</span><b id="fLunar">—</b></div>
@@ -151,20 +151,26 @@
       </div>
     </div>
 
-    <!-- ============ 添加 / 编辑宝宝 ============ -->
+    <!-- ============ 添加 / 编辑成员 ============ -->
     <div class="sheet-mask" id="babyMask">
       <div class="sheet">
-        <div class="sheet-title"><span id="babySheetTitle">添加宝宝</span><button type="button" data-close="babyMask">关闭</button></div>
+        <div class="sheet-title"><span id="babySheetTitle">添加成员</span><button type="button" data-close="babyMask">关闭</button></div>
         <div class="avatar-pick">
-          <div class="preview" id="avatarPreview">👶</div>
-          <div>
-            <label class="pick" for="avatarInput">选择头像</label>
-            <input type="file" id="avatarInput" accept="image/*" />
-            <div style="font-size:10px;color:var(--muted);margin-top:6px">会自动压缩到 160px，不占空间</div>
+          <button type="button" class="preview" id="avatarPreview" title="点击更换头像">
+            <span class="ph">👶</span>
+            <span class="cam">📷</span>
+          </button>
+          <div class="pick-side">
+            <button type="button" class="pick" id="avatarPickBtn">更换头像</button>
+            <div class="pick-hint">点左边圆圈也能换 · 自动压到 160px</div>
           </div>
+          <input type="file" id="avatarInput" accept="image/*" />
         </div>
-        <div style="height:10px"></div>
-        <div class="field"><label>宝宝的昵称</label><input type="text" id="babyNameInput" placeholder="例如：皮皮" maxlength="12" /></div>
+        <div class="field">
+          <label>关系</label>
+          <div class="rel-chips" id="relChips"></div>
+        </div>
+        <div class="field"><label>称呼</label><input type="text" id="babyNameInput" placeholder="例如：皮皮 / 老公 / 妈妈" maxlength="12" /></div>
         <div class="field"><label>出生日期</label><input type="date" id="babyBirthInput" /></div>
         <div class="sheet-actions">
           <button class="btn" id="babySave">保存</button>
